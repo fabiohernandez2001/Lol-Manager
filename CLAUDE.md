@@ -111,3 +111,46 @@ Note: Champion data uses Spanish (`es_ES`) while item data uses English (`en_US`
 4. **lol_update views** may have issues with null values when extracting from Item data (noted in git commit history)
 5. **SummonerViewSet** has inconsistent method implementations (line 53 uses wrong serializer)
 - Don't make references to yourself in the commit comments
+- # Project Context (Read First)
+
+We are building a stats and recommendation web app for League of Legends, similar to OP.GG / U.GG.
+
+Tech stack:
+- Frontend: **React**
+- Backend: **Django** (REST API layer + business logic)
+- Database: **PostgreSQL**
+
+What the app does:
+1) **Riot API ingestion**
+   - Fetch and store data about summoners/players, match history, match details, champions, items, ranks, etc.
+   - Respect Riot routing (platform vs regional), handle 429 rate limits, retries/backoff, and timeouts.
+
+2) **User-facing features**
+   - Player profile pages:
+     - Recent matches, champions played, W/L, winrate, KDA, role/lane, items, runes, and match summaries.
+     - Optional: filters by queue type, patch, champion, timeframe.
+   - Champion and item pages:
+     - Champion performance by patch/role (winrate/pickrate/banrate), recommended builds, counters and matchup stats.
+     - Item performance and synergies (what items work best with which champs/roles).
+   - Statistics/meta pages:
+     - Patch-based meta trends, best builds by situation, counters, matchup winrate deltas, sample sizes, etc.
+
+3) **Data processing approach**
+   - Store raw match payloads (JSON) for reliability and future recomputation.
+   - Compute aggregated tables (materialized or precomputed) for fast UI:
+     - champion_stats_by_patch_role
+     - build_stats_by_champion_patch_role
+     - matchup/counter_stats
+   - Always include sample size and patch context, so results are trustworthy.
+
+Core principles:
+- **Reliability**: accurate stats, transparent assumptions, patch-awareness, and strong error handling.
+- **Performance**: caching and precomputed aggregates for fast responses.
+- **Maintainability**: clean architecture, clear logging, and tests for key logic.
+- **Avoid misleading output**: do not invent stats; if data is missing, show “not enough data”.
+
+Future addition (AI assistant):
+- Provide recommendations and explanations grounded in our stored aggregated stats (RAG-like behavior).
+- Must not hallucinate; must reference patch and available data.
+
+Please keep code changes consistent with existing patterns and focus on clean, production-minded implementation.
