@@ -10,22 +10,27 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
+import os
 from pathlib import Path
+from dotenv import load_dotenv
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+# Load environment variables from .env file
+load_dotenv(BASE_DIR / '.env')
 
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-uy@=cqa&!t)v-(0jq6u6v6ia$4b+_c-e*xe-rgpv2m63h0n+fm'
+SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-uy@=cqa&!t)v-(0jq6u6v6ia$4b+_c-e*xe-rgpv2m63h0n+fm')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.getenv('DEBUG', 'True') == 'True'
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
 
 
 # Application definition
@@ -59,8 +64,8 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
-CORS_ORIGIN_ALLOW_ALL = True
-#CORS_ALLOWED_ORIGINS = ['',http://localhost:5173']
+CORS_ORIGIN_ALLOW_ALL = os.getenv('DEBUG', 'True') == 'True'  # Only allow all in development
+CORS_ALLOWED_ORIGINS = os.getenv('CORS_ALLOWED_ORIGINS', 'http://localhost:5173,http://localhost:3000').split(',')
 
     
 
@@ -89,8 +94,16 @@ WSGI_APPLICATION = 'ChallengerBrain.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': os.getenv('DB_ENGINE', 'django.db.backends.sqlite3'),
+        'NAME': os.getenv('DB_NAME', str(BASE_DIR / 'db.sqlite3')),
+        'USER': os.getenv('DB_USER', ''),
+        'PASSWORD': os.getenv('DB_PASSWORD', ''),
+        'HOST': os.getenv('DB_HOST', ''),
+        'PORT': os.getenv('DB_PORT', ''),
+        'OPTIONS': {
+            'connect_timeout': 10,
+            'options': '-c statement_timeout=30000'
+        } if os.getenv('DB_ENGINE') == 'django.db.backends.postgresql' else {},
     }
 }
 
@@ -135,3 +148,13 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# Riot API Configuration
+RIOT_API_KEY = os.getenv('RIOT_API_KEY', '')
+RIOT_RATE_LIMIT_PER_SECOND = int(os.getenv('RIOT_RATE_LIMIT_PER_SECOND', '20'))
+RIOT_RATE_LIMIT_PER_2MIN = int(os.getenv('RIOT_RATE_LIMIT_PER_2MIN', '100'))
+
+# Supabase Configuration
+SUPABASE_URL = os.getenv('SUPABASE_URL', '')
+SUPABASE_ANON_KEY = os.getenv('SUPABASE_ANON_KEY', '')
+SUPABASE_PUBLISHABLE_KEY = os.getenv('SUPABASE_PUBLISHABLE_KEY', '')

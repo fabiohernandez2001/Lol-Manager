@@ -50,7 +50,7 @@ class SummonerViewSet(viewsets.ReadOnlyModelViewSet):
     
     def list(self,request):
         summoner = Summoner.objects.all()
-        serializer = Summoner(summoner, many=True)
+        serializer = SummonerSerializer(summoner, many=True)
         return Response(serializer.data)
     
     @action(detail=False, methods=["get"])

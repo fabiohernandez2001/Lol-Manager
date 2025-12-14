@@ -105,7 +105,6 @@ class Rune(models.Model):
 class Item(models.Model):
     id = models.PositiveSmallIntegerField(primary_key=True, default=0)
     name = models.CharField(max_length=20, default = "")
-    description = models.CharField(max_length=200, default="")
     plaintext = models.CharField(max_length=255, blank=True, default="")
     value = models.PositiveSmallIntegerField(default=0)
     description = models.TextField(blank=True, default="")  # HTML de Riot
@@ -148,7 +147,7 @@ class Item(models.Model):
 
 
     def __str__(self) -> str:
-        return self.item_name
+        return self.name
 
 
 class MatchSummoners(models.Model):
