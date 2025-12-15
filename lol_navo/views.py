@@ -31,7 +31,7 @@ class ChampionViewSet(viewsets.ReadOnlyModelViewSet):
     def get_summoner(self, request):
         name = request.query_params.get("name")
         if name:
-            summoners = self.queryset.filter(name__icontains=name)
+            summoners = Summoner.objects.filter(username__icontains=name)
         else:
             summoners = Summoner.objects.all()
         serializer = SummonerSerializer(summoners, many=True)
@@ -42,10 +42,11 @@ class SummonerViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = SummonerSerializer
     pagination_class = None
 
-    def get_queryset(self,request):
-        name = self.request.query_params.get("name")  
+    def get_queryset(self):
+        queryset = self.queryset
+        name = self.request.query_params.get("name")
         if name:
-            queryset = self.queryset.filter(name__icontains=name)  # busca coincidencias parciales
+            queryset = queryset.filter(username__icontains=name)
         return queryset
     
     def list(self,request):
@@ -55,7 +56,7 @@ class SummonerViewSet(viewsets.ReadOnlyModelViewSet):
     
     @action(detail=False, methods=["get"])
     def get_name(self, request):
-        summoner = self.queryset.filter(name__icontains=request.query_params.get("name"))
+        summoner = self.queryset.filter(username__icontains=request.query_params.get("name"))
         serializer = SummonerSerializer(summoner, many=True)
         return Response(serializer.data)
     

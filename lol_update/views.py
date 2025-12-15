@@ -45,35 +45,41 @@ def get_items(request):
     for key, item in items["data"].items():
         # print(key, item["name"])
 
+        # Extract nested gold and image data with null checks
+        gold_data = item.get("gold", {})
+        image_data = item.get("image", {})
+
         Item.objects.update_or_create(
             id = key,
-            name = item.get("name"),
-            plaintext = item.get("plaintext"),
-            description = item.get("description"),
-            colloq = item.get("colloq"),
-            stacks = item.get("stacks"),
-            depth = item.get("depth"),
-            consumed = item.get("consumed"),
-            consume_on_full = item.get("consume_on_full"),
-            in_store = item.get("in_store"),
-            hide_from_all =item.get("hide_from_all"),
-            required_champion = item.get("required_champion"),
-            required_ally =item.get("required_ally"),
-            special_recipe =item.get("special_recipe"),
-            required_buff_currency_name =item.get("buff_currency_name"),
-            required_buff_currency_cost = item.get("required_buff_currency_cost"),
-            base_gold = item.get("gold").get("base"),
-            purchasable = item.get("gold").get("purchasable"),
-            total_gold = item.get("gold").get("total"),
-            sell_gold = item.get("gold").get("sell"),
-            image = item.get("image").get("full"),
-            stats = item.get("stats"),
-            effect = item.get("effect"),
-            builds_into = item.get("build_into"),
-            builds_from = item.get("build_from"),
-            tags = item.get("tags"),
-            maps = item.get("maps")
-            )
+            defaults={
+                "name": item.get("name", ""),
+                "plaintext": item.get("plaintext", ""),
+                "description": item.get("description", ""),
+                "colloq": item.get("colloq", ""),
+                "stacks": item.get("stacks"),
+                "depth": item.get("depth"),
+                "consumed": item.get("consumed"),
+                "consume_on_full": item.get("consume_on_full"),
+                "in_store": item.get("in_store", True),
+                "hide_from_all": item.get("hide_from_all", False),
+                "required_champion": item.get("required_champion", ""),
+                "required_ally": item.get("required_ally", ""),
+                "special_recipe": item.get("special_recipe"),
+                "required_buff_currency_name": item.get("requiredBuffCurrencyName", ""),
+                "required_buff_currency_cost": item.get("requiredBuffCurrencyCost"),
+                "base_gold": gold_data.get("base", 0),
+                "purchasable": gold_data.get("purchasable", False),
+                "total_gold": gold_data.get("total", 0),
+                "sell_gold": gold_data.get("sell", 0),
+                "image": f"https://ddragon.leagueoflegends.com/cdn/{version}/img/item/{image_data.get('full', '')}" if image_data.get("full") else "",
+                "stats": item.get("stats", {}),
+                "effect": item.get("effect", {}),
+                "builds_into": item.get("into", []),
+                "builds_from": item.get("from", []),
+                "tags": item.get("tags", []),
+                "maps": item.get("maps", {}),
+            }
+        )
 
 
 
