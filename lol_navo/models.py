@@ -48,15 +48,15 @@ class Match(models.Model):
 
 class Champion(models.Model):
     id = models.CharField(primary_key=True, max_length=20)
-    name = models.CharField(max_length=16, default = "")
-    title = models.CharField(max_length=20, default = "")
+    name = models.CharField(max_length=32, default = "")
+    title = models.CharField(max_length=64, default = "")
     description = models.CharField(max_length=2550, default = "")
     attack = models.PositiveSmallIntegerField(default=0)
     defense = models.PositiveSmallIntegerField(default=0)
     magic = models.PositiveSmallIntegerField(default=0)
     difficulty = models.PositiveSmallIntegerField(default=0)
     tags = models.JSONField(default=list, blank=True)
-    partype = models.CharField(default = "")
+    partype = models.CharField(max_length=64, default = "")
     hp = models.FloatField(default=0)
     hp_per_level = models.FloatField(default=0)
     mp = models.FloatField(default=0)
