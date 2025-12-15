@@ -93,9 +93,9 @@ class Champion(models.Model):
 
 
 class Rune(models.Model):
-    id = models.PositiveSmallIntegerField(primary_key=True)
+    id = models.PositiveIntegerField(primary_key=True)
     rune_name = models.CharField(max_length=20)
-    rune_value = models.PositiveSmallIntegerField()
+    rune_value = models.PositiveIntegerField()
     rune_description = models.CharField(max_length=200)
 
     def __str__(self) -> str:
@@ -103,8 +103,8 @@ class Rune(models.Model):
 
 
 class Item(models.Model):
-    id = models.PositiveSmallIntegerField(primary_key=True, default=0)
-    name = models.CharField(max_length=20, default = "")
+    id = models.PositiveIntegerField(primary_key=True, default=0)
+    name = models.CharField(max_length=100, default = "")
     plaintext = models.CharField(max_length=255, blank=True, default="")
     value = models.PositiveSmallIntegerField(default=0)
     description = models.TextField(blank=True, default="")  # HTML de Riot

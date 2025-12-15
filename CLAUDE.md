@@ -154,3 +154,4 @@ Future addition (AI assistant):
 - Must not hallucinate; must reference patch and available data.
 
 Please keep code changes consistent with existing patterns and focus on clean, production-minded implementation.
+- Everytime we make a commit write down the whole explanation of the commit in the COMMITS.md file. But make the commit comment very concise
