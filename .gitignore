@@ -416,6 +416,7 @@ FodyWeavers.xsd
 *.msix
 *.msm
 *.msp
+*.mcp.json
 
 # Python virtual environment
 venv/
