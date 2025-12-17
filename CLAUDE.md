@@ -154,4 +154,18 @@ Future addition (AI assistant):
 - Must not hallucinate; must reference patch and available data.
 
 Please keep code changes consistent with existing patterns and focus on clean, production-minded implementation.
-- Everytime we make a commit write down the whole explanation of the commit in the COMMITS.md file. But make the commit comment very concise
+
+## Commit Documentation Workflow
+
+Every time we make a commit:
+1. Create a detailed explanation file in `.commits/` directory
+2. File naming format: `YYYY-MM-DD-concise-description.md` (e.g., `2025-12-17-complete-database-schema.md`)
+3. File structure should include:
+   - Title and date
+   - Commit hash (if available)
+   - Changes made (detailed breakdown)
+   - Why the changes matter
+   - Testing/verification results
+   - Database/architecture impact (if applicable)
+4. Keep the actual git commit message concise but informative
+5. The `.commits/` directory is gitignored - these are local documentation files

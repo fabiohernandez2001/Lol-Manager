@@ -426,3 +426,6 @@ ROADMAP.md
 QUICK_START.md
 PROJECT_SUMMARY.md
 COMMITS.md
+
+# Commit documentation (stored in individual files)
+.commits/
