@@ -169,3 +169,16 @@ Every time we make a commit:
    - Database/architecture impact (if applicable)
 4. Keep the actual git commit message concise but informative
 5. The `.commits/` directory is gitignored - these are local documentation files
+
+## Daily Closure Workflow
+
+After calling the daily-closer agent:
+1. **Update ROADMAP.md** with recent progress:
+   - Mark completed tasks with [x] and completion dates
+   - Update "Recent Progress" section at the bottom
+   - Update completion percentage if major phase completed
+2. **Keep README.md static** - do not update with current status
+3. This ensures the next Claude instance has clear context about:
+   - What was accomplished today
+   - Current project state
+   - What to work on next
