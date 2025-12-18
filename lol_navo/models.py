@@ -24,7 +24,7 @@ class Patch(models.Model):
 
 
 class Summoner(models.Model):
-    puuid = models.CharField(primary_key=True, max_length=72)
+    puuid = models.CharField(primary_key=True, max_length=100)
     username = models.CharField(max_length=16)
     server = models.CharField(max_length=5)
     icon = models.URLField()
