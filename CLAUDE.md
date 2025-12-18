@@ -16,25 +16,25 @@ Lol-Manager is a Django REST Framework API for League of Legends data management
 
 ### Running the server
 ```bash
-python manage.py runserver
+python3 manage.py runserver
 ```
 
 ### Database operations
 ```bash
 # Apply migrations
-python manage.py migrate
+python3 manage.py migrate
 
 # Create migrations after model changes
-python manage.py makemigrations
+python3 manage.py makemigrations
 
 # Access Django shell
-python manage.py shell
+python3 manage.py shell
 ```
 
 ### Administrative
 ```bash
 # Create superuser for admin panel
-python manage.py createsuperuser
+python3 manage.py createsuperuser
 ```
 
 ## Dependencies
@@ -182,3 +182,4 @@ After calling the daily-closer agent:
    - What was accomplished today
    - Current project state
    - What to work on next
+- make commits ONLY when I eplicitly ask you
