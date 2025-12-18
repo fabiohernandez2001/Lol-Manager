@@ -3,8 +3,7 @@ from dotenv import load_dotenv
 import os
 
 load_dotenv()
-api_key = os.getenv("api_key")
-api_key = "RGAPI-bda40caf-0610-4b11-b89a-81dd80aaa4a9"
+api_key = os.getenv("RIOT_API_KEY")
 #Todas las funciones requieren de una API_Key como esta
 
 #Función que devuelve el uuid, icono y nivel del usuario aportando username y tag. Se puede modificar para que devuelva cualquiera de los otros campos nombrados
