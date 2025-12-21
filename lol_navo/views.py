@@ -43,7 +43,7 @@ class SummonerViewSet(viewsets.ReadOnlyModelViewSet):
     pagination_class = None
 
     def get_queryset(self):
-        queryset = self.queryset
+        queryset = Summoner.objects.all().order_by("username")
         name = self.request.query_params.get("name")
         if name:
             queryset = queryset.filter(username__icontains=name)
