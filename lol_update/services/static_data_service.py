@@ -53,6 +53,50 @@ def get_latest_version() -> Optional[str]:
         return None
 
 
+def should_sync_static_data() -> Tuple[bool, Optional[str], Optional[str]]:
+    """
+    Check if static data should be synced based on version comparison.
+
+    This prevents unnecessary syncs by comparing the latest Data Dragon
+    version against what's currently stored in the database. Since Data
+    Dragon versions only change when Riot releases a new patch (~every 2 weeks),
+    this avoids wasteful daily syncs of unchanged data.
+
+    Returns:
+        Tuple of (should_sync: bool, current_version: str, stored_version: str)
+
+    Examples:
+        >>> should_sync, current, stored = should_sync_static_data()
+        >>> if should_sync:
+        >>>     print(f"New version {current} detected (was {stored})")
+        >>> else:
+        >>>     print(f"Already on latest version {current}")
+    """
+    from lol_navo.models import DataDragonVersion
+
+    # Get latest version from Data Dragon
+    latest_version = get_latest_version()
+    if not latest_version:
+        logger.error("Could not fetch latest Data Dragon version")
+        return False, None, None
+
+    # Get stored version from database
+    stored_version = DataDragonVersion.get_current_version()
+
+    # If no version stored, we should sync
+    if not stored_version:
+        logger.info(f"No version stored, will sync to {latest_version}")
+        return True, latest_version, None
+
+    # Compare versions
+    if latest_version != stored_version:
+        logger.info(f"New version detected: {latest_version} (was {stored_version})")
+        return True, latest_version, stored_version
+    else:
+        logger.info(f"Already on latest version: {latest_version}, skipping sync")
+        return False, latest_version, stored_version
+
+
 def sync_champions(version: Optional[str] = None, language: str = 'en_US') -> Tuple[int, int]:
     """
     Sync champion data from Data Dragon to database.
