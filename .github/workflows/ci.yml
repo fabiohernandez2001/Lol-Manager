@@ -1,0 +1,111 @@
+name: Django CI
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        python-version: ['3.12']
+
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: test_lol_manager
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ matrix.python-version }}
+        cache: 'pip'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install pytest pytest-django pytest-cov flake8
+
+    - name: Create .env file
+      run: |
+        echo "SECRET_KEY=${{ secrets.DJANGO_SECRET_KEY }}" >> .env
+        echo "DEBUG=True" >> .env
+        echo "ALLOWED_HOSTS=localhost,127.0.0.1" >> .env
+        echo "RIOT_API_KEY=${{ secrets.RIOT_API_KEY }}" >> .env
+        echo "DB_ENGINE=django.db.backends.postgresql" >> .env
+        echo "DB_NAME=test_lol_manager" >> .env
+        echo "DB_USER=postgres" >> .env
+        echo "DB_PASSWORD=postgres" >> .env
+        echo "DB_HOST=localhost" >> .env
+        echo "DB_PORT=5432" >> .env
+
+    - name: Run migrations
+      run: |
+        python manage.py migrate --noinput
+
+    - name: Lint with flake8
+      run: |
+        # Stop the build if there are Python syntax errors or undefined names
+        flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics --exclude=.venv,migrations,__pycache__
+        # Exit-zero treats all errors as warnings
+        flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics --exclude=.venv,migrations,__pycache__
+
+    - name: Run Django system checks
+      run: |
+        python manage.py check
+
+    - name: Run tests
+      run: |
+        # When you add tests, this will run them
+        # pytest --cov=. --cov-report=xml --cov-report=term
+        echo "No tests yet - skipping"
+
+    - name: Check for missing migrations
+      run: |
+        python manage.py makemigrations --check --dry-run --noinput
+
+  security:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.12'
+        cache: 'pip'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install safety bandit
+
+    - name: Security check with bandit
+      run: |
+        bandit -r . -ll -x ./.venv,./*/migrations/
+
+    - name: Check dependencies for known vulnerabilities
+      run: |
+        safety check --json || true
