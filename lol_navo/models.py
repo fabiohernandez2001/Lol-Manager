@@ -1,5 +1,6 @@
 from django.db import models
 from django.utils import timezone
+from typing import Optional
 
 
 class Patch(models.Model):
@@ -632,3 +633,47 @@ class MatchupStats(models.Model):
 
     def __str__(self) -> str:
         return f"{self.champion.name} vs {self.opponent.name} - {self.role} - {self.winrate:.1f}% WR"
+
+
+# ============================================================================
+# DATA DRAGON VERSION TRACKING
+# ============================================================================
+
+
+class DataDragonVersion(models.Model):
+    """
+    Tracks the currently synced Data Dragon version.
+
+    This ensures we only sync champions/items/runes when Riot releases
+    a new patch, avoiding unnecessary API calls and database operations.
+
+    Data Dragon versions only change when Riot releases a new patch
+    (typically every ~2 weeks), so tracking this prevents wasteful
+    daily syncs of unchanged data.
+    """
+    version = models.CharField(max_length=20, unique=True)
+    synced_at = models.DateTimeField(auto_now=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "Data Dragon Version"
+        verbose_name_plural = "Data Dragon Versions"
+        ordering = ['-synced_at']
+
+    def __str__(self) -> str:
+        return f"Version {self.version} (synced {self.synced_at})"
+
+    @classmethod
+    def get_current_version(cls) -> Optional[str]:
+        """Get the most recently synced version."""
+        latest = cls.objects.order_by('-synced_at').first()
+        return latest.version if latest else None
+
+    @classmethod
+    def update_version(cls, version: str) -> 'DataDragonVersion':
+        """Update or create the current version record."""
+        obj, created = cls.objects.update_or_create(
+            version=version,
+            defaults={'version': version}
+        )
+        return obj

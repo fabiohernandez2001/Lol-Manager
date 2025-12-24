@@ -14,3 +14,12 @@ sqlparse==0.5.3
 typing_extensions==4.15.0
 tzdata==2025.2
 urllib3==2.5.0
+
+# Celery Task Queue Dependencies
+celery==5.4.0                # Core task queue
+redis==5.0.1                 # Redis client for broker/backend
+django-celery-beat==2.8.1    # Periodic task scheduling (Django 5.2 compatible)
+django-celery-results==2.5.1 # Store task results in Django database
+flower==2.0.1                # Web-based monitoring
+kombu==5.4.2                 # Messaging library
+vine==5.1.0                  # Promises/callbacks
