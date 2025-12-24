@@ -6,7 +6,6 @@ integrating the logic from API_Requests.py (matches_ids, match_info, timeline).
 """
 
 import logging
-import json
 from typing import List, Optional, Dict
 from datetime import datetime
 from riotwatcher import ApiError
@@ -138,7 +137,7 @@ def fetch_match_details(match_id: str, region: str = 'euw') -> Optional[Match]:
             queue_type=info.get('queueId'),
             time_lane='',  # Default value
             gold_diff=0,  # We'll calculate this later if needed
-            raw_data=json.dumps(match_data)  # Store full JSON for future reprocessing
+            raw_data=match_data  # Store full JSON for future reprocessing (JSONField expects dict, not string)
         )
 
         logger.info(f"Created Match {match_id}")
@@ -229,17 +228,33 @@ def _create_match_summoners(match: Match, participants: List[Dict]) -> None:
                 champion = None
 
             # Extract items (item0-item6)
-            items = [
-                participant.get(f'item{i}')
-                for i in range(7)
-            ]
+            items = {}
+            for i in range(7):
+                item_id = participant.get(f'item{i}')
+                if item_id and item_id != 0:
+                    items[f'item{i}_id'] = item_id
 
-            # Extract rune data
+            # Extract rune data in the format expected by model
+            # Model expects: {"primary": [ids...], "secondary": [ids...], "shards": [ids...]}
             perks = participant.get('perks', {})
-            rune_ids = []
-            for style in perks.get('styles', []):
-                for selection in style.get('selections', []):
-                    rune_ids.append(selection.get('perk'))
+            rune_data = {}
+            styles = perks.get('styles', [])
+            if len(styles) > 0:
+                # Primary rune tree
+                primary_selections = [s.get('perk') for s in styles[0].get('selections', [])]
+                rune_data['primary'] = primary_selections
+            if len(styles) > 1:
+                # Secondary rune tree
+                secondary_selections = [s.get('perk') for s in styles[1].get('selections', [])]
+                rune_data['secondary'] = secondary_selections
+            # Stat shards
+            stat_perks = perks.get('statPerks', {})
+            if stat_perks:
+                rune_data['shards'] = [
+                    stat_perks.get('defense', 0),
+                    stat_perks.get('flex', 0),
+                    stat_perks.get('offense', 0)
+                ]
 
             # Extract summoner spells
             summoner_spell_ids = [
@@ -247,28 +262,40 @@ def _create_match_summoners(match: Match, participants: List[Dict]) -> None:
                 participant.get('summoner2Id')
             ]
 
+            # Get queue type for game_type field
+            queue_id = match.queue_type if hasattr(match, 'queue_type') else 0
+            game_type_map = {
+                420: 'RANKED_SOLO',
+                440: 'RANKED_FLEX',
+                400: 'NORMAL_DRAFT',
+                430: 'NORMAL_BLIND',
+                450: 'ARAM',
+            }
+            game_type = game_type_map.get(queue_id, 'UNKNOWN')
+
             # Create MatchSummoners entry
             MatchSummoners.objects.create(
                 match=match,
                 summoner=summoner,
                 champion=champion,
-                result=participant.get('win', False),
+                winner=participant.get('win', False),
                 kills=participant.get('kills', 0),
                 deaths=participant.get('deaths', 0),
                 assists=participant.get('assists', 0),
-                items=json.dumps(items),
-                rune_ids=json.dumps(rune_ids),
-                summoner_spell_ids=json.dumps(summoner_spell_ids),
-                cs=participant.get('totalMinionsKilled', 0),
-                wards_placed=participant.get('wardsPlaced', 0),
-                vision_score=participant.get('visionScore', 0),
-                damage_dealt=participant.get('totalDamageDealt', 0),
-                damage_taken=participant.get('totalDamageTaken', 0),
-                healing=participant.get('totalHeal', 0),
+                rune_ids=rune_data,
+                summoner_spell_ids=summoner_spell_ids,
+                cs=participant.get('totalMinionsKilled', 0) + participant.get('neutralMinionsKilled', 0),
+                wards_used=participant.get('wardsPlaced', 0),
+                vision_points=participant.get('visionScore', 0),
+                damage_dealt=participant.get('totalDamageDealtToChampions', 0),
+                damage_received=participant.get('totalDamageTaken', 0),
+                damage_healed=participant.get('totalHeal', 0),
                 damage_mitigated=participant.get('damageSelfMitigated', 0),
-                gold=participant.get('goldEarned', 0),
-                role=participant.get('teamPosition', 'UNKNOWN'),  # TOP, JUNGLE, MIDDLE, BOTTOM, UTILITY
-                lane=participant.get('lane', 'UNKNOWN'),
+                total_gold=participant.get('goldEarned', 0),
+                role=participant.get('teamPosition', ''),  # TOP, JUNGLE, MIDDLE, BOTTOM, UTILITY
+                lane=participant.get('lane', ''),
+                game_type=game_type,
+                **items  # Unpack item0_id, item1_id, etc.
             )
 
             logger.debug(f"Created MatchSummoner for {summoner.username} in {match.id}")

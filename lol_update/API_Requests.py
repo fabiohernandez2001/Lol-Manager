@@ -10,7 +10,7 @@ api_key = os.getenv("RIOT_API_KEY")
 
 def get_puuid(name, tag, api_key):
     api_url  = f'https://europe.api.riotgames.com/riot/account/v1/accounts/by-riot-id/{name}/{tag}?api_key={api_key}'
-    res = requests.get(api_url)
+    res = requests.get(api_url, timeout=10)
     player_info = res.json()
     player_uuid = [player_info['puuid']]
     return(player_uuid)
@@ -25,7 +25,7 @@ PUUID = get_puuid("koldi", "doggy", api_key)
 
 def get_icon_lvl (puuid, api_key):
     icon_url = f"https://euw1.api.riotgames.com/lol/summoner/v4/summoners/by-puuid/{puuid}?api_key={api_key}"
-    res =  requests.get(icon_url).json()
+    res =  requests.get(icon_url, timeout=10).json()
     icon_id =res["profileIconId"]
     icon = f"https://static.bigbrain.gg/assets/lol/riot_static/15.20.1/img/profileicon/{icon_id}"
     lvl = res["summonerLevel"]
@@ -39,7 +39,7 @@ def get_icon_lvl (puuid, api_key):
 
 def matches_ids(id, api_key, start, count):
     matchlist_url = f"https://europe.api.riotgames.com/lol/match/v5/matches/by-puuid/{id}/ids?type=ranked&start={start}&count={count}&api_key={api_key}"
-    res = requests.get(matchlist_url).json()
+    res = requests.get(matchlist_url, timeout=10).json()
     return res
 
 #Ejemplo
@@ -51,7 +51,7 @@ Matches = matches_ids(PUUID, api_key, 0, 5)
 
 def match_info(id, api_key):
     match_url = f"https://europe.api.riotgames.com/lol/match/v5/matches/{id}?api_key={api_key}"
-    res = requests.get(match_url)
+    res = requests.get(match_url, timeout=10)
     match_info = res.json()
     return match_info
 
@@ -64,7 +64,7 @@ print("Estos son los nombres de usuario de cada participante de la partida: "+ "
 
 def timeline(matchid, api_key):
     url = f"https://europe.api.riotgames.com/lol/match/v5/matches/{matchid}/timeline?api_key={api_key}"
-    res = requests.get(url)
+    res = requests.get(url, timeout=10)
     return res.json()
 
 #Ejemplo
@@ -75,7 +75,7 @@ with  open("test.json", "w") as a:
 #Devuelve los datos de Flex y soloQ de la ultima season
 def get_all_ranks(Puuid, api_key):
     url = f"https://euw1.api.riotgames.com/lol/league/v4/entries/by-puuid/{Puuid}?api_key={api_key}"
-    res = requests.get(url).json()
+    res = requests.get(url, timeout=10).json()
     Ranked_Flex = [res[0]["queueType"],res[0]["tier"], res[0]["rank"], res[0]["leaguePoints"], res[0]["wins"], res[0]["losses"] ]
     SoloQ = [res[1]["queueType"],res[1]["tier"], res[1]["rank"], res[1]["leaguePoints"], res[1]["wins"], res[1]["losses"] ]
     return Ranked_Flex, SoloQ
