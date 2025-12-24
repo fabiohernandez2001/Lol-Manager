@@ -56,7 +56,7 @@ def fetch_summoner_by_riot_id(
         # This replaces: get_puuid(name, tag, api_key)
         # Note: RiotWatcher 3.3.1 doesn't have account API, so we use direct requests
         account_url = f'https://{regional_endpoint}.api.riotgames.com/riot/account/v1/accounts/by-riot-id/{game_name}/{tag_line}?api_key={RIOT_API_KEY}'
-        response = requests.get(account_url)
+        response = requests.get(account_url, timeout=10)
         response.raise_for_status()
         account = response.json()
         puuid = account['puuid']
@@ -75,7 +75,7 @@ def fetch_summoner_by_riot_id(
         ranked_stats = _fetch_ranked_stats(puuid, platform_region)
 
         # Step 4: Save or update in database
-        # Note: Summoner model doesn't have level, tag, summoner_id, tier, or LP fields
+        # Note: Summoner model doesn't have level, summoner_id, tier, or LP fields
         # Icon field expects URL, but we'll keep it simple with the icon ID URL
         icon_id = summoner_data.get('profileIconId', 0)
 
@@ -83,6 +83,7 @@ def fetch_summoner_by_riot_id(
             puuid=puuid,
             defaults={
                 'username': game_name[:16],  # max_length=16
+                'tag': tag_line[:5],  # max_length=5
                 'server': platform_region[:5],  # max_length=5
                 'icon': f"https://ddragon.leagueoflegends.com/cdn/15.24.1/img/profileicon/{icon_id}.png",
                 **ranked_stats
