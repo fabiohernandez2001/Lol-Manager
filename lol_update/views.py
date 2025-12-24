@@ -210,9 +210,9 @@ class UpdateSummonerRankView(APIView):
 # ===========================
 def get_champions(request):
     version_url = "https://ddragon.leagueoflegends.com/api/versions.json"
-    version = requests.get(version_url).json()[0]
+    version = requests.get(version_url, timeout=10).json()[0]
     champion_url = f"https://ddragon.leagueoflegends.com/cdn/{version}/data/es_ES/champion.json"
-    champions = requests.get(champion_url).json()
+    champions = requests.get(champion_url, timeout=30).json()
     for champion in champions["data"].values():
         Champion.objects.update_or_create (id = champion["key"],
                                 icon = f'https://ddragon.leagueoflegends.com/cdn/15.21.1/img/champion/{champion["image"]["full"]}',
@@ -246,9 +246,9 @@ def get_champions(request):
                                 )
 def get_items(request):
     version_url = "https://ddragon.leagueoflegends.com/api/versions.json"
-    version = requests.get(version_url).json()[0]
+    version = requests.get(version_url, timeout=10).json()[0]
     url = f"https://ddragon.leagueoflegends.com/cdn/{version}/data/en_US/item.json"
-    items = requests.get(url).json()
+    items = requests.get(url, timeout=30).json()
     for key, item in items["data"].items():
         # print(key, item["name"])
 

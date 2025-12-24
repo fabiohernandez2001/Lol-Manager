@@ -37,6 +37,119 @@ python3 manage.py shell
 python3 manage.py createsuperuser
 ```
 
+## Celery Task Queue
+
+The project uses Celery for asynchronous task processing and periodic tasks.
+
+### Running Celery Services
+
+You need to run these in separate terminals:
+
+**Terminal 1 - Celery Worker:**
+```bash
+celery -A ChallengerBrain worker --loglevel=info
+```
+
+**Terminal 2 - Celery Beat (periodic tasks):**
+```bash
+celery -A ChallengerBrain beat --loglevel=info --scheduler django_celery_beat.schedulers:DatabaseScheduler
+```
+
+**Terminal 3 - Flower (monitoring dashboard):**
+```bash
+celery -A ChallengerBrain flower --port=5555
+# Access at: http://localhost:5555
+```
+
+**Terminal 4 - Django Development Server:**
+```bash
+python3 manage.py runserver
+```
+
+### Available Tasks
+
+**High Priority (User-facing):**
+- `fetch_summoner_task(game_name, tag_line, region)` - Fetch summoner by Riot ID (2-5s)
+- `bulk_fetch_matches_task(puuid, region, count)` - Fetch multiple matches (30-120s)
+- `fetch_match_details_task(match_id, region)` - Fetch single match (2-8s)
+
+**Medium Priority (Periodic):**
+- `sync_champions_task(version)` - Sync champions from Data Dragon (15-30s)
+- `sync_items_task(version)` - Sync items from Data Dragon (20-40s)
+- `sync_runes_task(version)` - Sync runes from Data Dragon (5-15s)
+- `sync_all_static_data_task(version, force)` - Sync all static data with smart version checking
+  - **Smart sync**: Only syncs if new Data Dragon version detected
+  - **Schedule**: Checks every 6 hours for new versions
+  - **Version tracking**: Stores last synced version in database
+  - **Duration**: 40-90s when sync needed, <1s when skipped
+
+**Low Priority (Batch):**
+- `update_tracked_summoners_ranks_task(batch_size)` - Update ranks for tracked summoners (2-10min, runs hourly)
+- `update_summoner_rank_task(puuid, region)` - Update single summoner rank (1-3s)
+
+### Triggering Tasks Manually
+
+You can trigger tasks in Django shell:
+
+```python
+# Start Django shell
+python3 manage.py shell
+
+# Import tasks
+from lol_update.tasks import fetch_summoner_task, sync_all_static_data_task
+
+# Trigger async task
+result = fetch_summoner_task.delay('koldi', 'doggy', 'euw')
+
+# Check status
+print(result.status)  # 'PENDING', 'STARTED', 'SUCCESS', 'FAILURE'
+
+# Get result (blocks until complete)
+puuid = result.get(timeout=10)
+
+# Trigger static data sync (only syncs if new version detected)
+result = sync_all_static_data_task.delay()
+print(result.get(timeout=180))
+
+# Force sync even if version hasn't changed (rare)
+result = sync_all_static_data_task.delay(force=True)
+print(result.get(timeout=180))
+```
+
+### Periodic Tasks
+
+Two periodic tasks are pre-configured:
+
+1. **Static Data Version Check** - Runs every 6 hours
+   - Task: `sync_all_static_data_task`
+   - **Smart behavior**: Only syncs champions/items/runes if new Data Dragon version detected
+   - **Efficiency**: Reduces unnecessary syncs by ~93% (365/year → ~26/year)
+   - Data Dragon versions only change when Riot releases patches (~every 2 weeks)
+   - Version tracking stored in `DataDragonVersion` model
+
+2. **Hourly Rank Updates** - Runs every 1 hour
+   - Task: `update_tracked_summoners_ranks_task`
+   - Updates ranks for summoners with matches (batch of 50)
+
+You can manage periodic tasks in Django Admin at `/admin/django_celery_beat/`
+
+### Production Setup (Upstash Redis)
+
+For production deployment with Upstash (managed Redis):
+
+1. Create account at https://upstash.com
+2. Create Redis database
+3. Update `.env`:
+   ```bash
+   CELERY_BROKER_URL=rediss://default:PASSWORD@endpoint.upstash.io:6379
+   CELERY_RESULT_BACKEND=rediss://default:PASSWORD@endpoint.upstash.io:6379
+   ```
+
+### Monitoring
+
+- **Flower Dashboard**: http://localhost:5555 - Real-time task monitoring
+- **Django Admin**: http://localhost:8000/admin/django_celery_results/ - Task execution history
+
 ## Dependencies
 
 Install required packages:

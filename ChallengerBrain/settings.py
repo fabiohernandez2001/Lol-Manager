@@ -51,7 +51,10 @@ INSTALLED_APPS = [
     'rest_framework',
     'corsheaders',
     'lol_navo.apps.LolNavoConfig',
-    'lol_update.apps.LolUpdateConfig'
+    'lol_update.apps.LolUpdateConfig',
+    # Celery apps
+    'django_celery_beat',     # Periodic task scheduling
+    'django_celery_results',  # Store task results in database
 ]
 
 MIDDLEWARE = [
@@ -158,3 +161,53 @@ RIOT_RATE_LIMIT_PER_2MIN = int(os.getenv('RIOT_RATE_LIMIT_PER_2MIN', '100'))
 SUPABASE_URL = os.getenv('SUPABASE_URL', '')
 SUPABASE_ANON_KEY = os.getenv('SUPABASE_ANON_KEY', '')
 SUPABASE_PUBLISHABLE_KEY = os.getenv('SUPABASE_PUBLISHABLE_KEY', '')
+
+# ============================================================================
+# CELERY CONFIGURATION
+# ============================================================================
+
+# Broker and Result Backend (Redis)
+CELERY_BROKER_URL = os.getenv('CELERY_BROKER_URL', 'redis://localhost:6379/0')
+CELERY_RESULT_BACKEND = os.getenv('CELERY_RESULT_BACKEND', 'redis://localhost:6379/0')
+
+# Task Serialization (JSON for security and readability)
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
+CELERY_TIMEZONE = TIME_ZONE  # Use Django's timezone (UTC)
+
+# Task Execution Settings
+CELERY_TASK_TRACK_STARTED = os.getenv('CELERY_TASK_TRACK_STARTED', 'True') == 'True'
+CELERY_TASK_TIME_LIMIT = int(os.getenv('CELERY_TASK_TIME_LIMIT', '300'))  # 5 minutes hard limit
+CELERY_TASK_SOFT_TIME_LIMIT = int(os.getenv('CELERY_TASK_SOFT_TIME_LIMIT', '270'))  # 4.5 minutes soft limit
+CELERY_RESULT_EXPIRES = 86400  # Results expire after 24 hours
+CELERY_TASK_ACKS_LATE = True  # Acknowledge tasks after completion (re-queue on worker crash)
+CELERY_WORKER_PREFETCH_MULTIPLIER = 1  # Fair task distribution for long-running tasks
+
+# Testing mode (run tasks synchronously)
+CELERY_TASK_ALWAYS_EAGER = os.getenv('CELERY_TASK_ALWAYS_EAGER', 'False') == 'True'
+
+# Periodic Task Schedule (Celery Beat)
+CELERY_BEAT_SCHEDULE = {
+    'sync-static-data-check': {  # Renamed from sync-static-data-daily
+        'task': 'lol_update.tasks.sync_all_static_data_task',
+        'schedule': 21600.0,  # Every 6 hours (check for new versions)
+        'options': {
+            'expires': 3600.0,  # Expire if not run within 1 hour
+        }
+    },
+    'update-tracked-summoners-hourly': {
+        'task': 'lol_update.tasks.update_tracked_summoners_ranks_task',
+        'schedule': 3600.0,  # Every 1 hour
+        'options': {
+            'expires': 600.0,  # Expire if not run within 10 minutes
+        }
+    },
+}
+
+# Celery Beat Scheduler (use Django database)
+CELERY_BEAT_SCHEDULER = 'django_celery_beat.schedulers:DatabaseScheduler'
+
+# Flower Monitoring Configuration
+FLOWER_BASIC_AUTH = os.getenv('FLOWER_BASIC_AUTH', 'admin:admin')
+FLOWER_PORT = int(os.getenv('FLOWER_PORT', '5555'))
