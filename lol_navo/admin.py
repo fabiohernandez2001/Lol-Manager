@@ -45,3 +45,24 @@ class RuneAdmin(admin.ModelAdmin):
 class ItemAdmin(admin.ModelAdmin):
     list_display = ("id", "name", "value")
     search_fields = ("id", "name")
+
+
+@admin.register(models.DataDragonVersion)
+class DataDragonVersionAdmin(admin.ModelAdmin):
+    """
+    Admin interface for Data Dragon version tracking.
+
+    This model tracks when we last synced static data (champions/items/runes)
+    and prevents unnecessary syncs when the version hasn't changed.
+    """
+    list_display = ('version', 'synced_at', 'created_at')
+    readonly_fields = ('version', 'synced_at', 'created_at')
+    ordering = ['-synced_at']
+
+    def has_add_permission(self, request):
+        # Prevent manual creation - only via sync task
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        # Allow deletion to force re-sync
+        return True

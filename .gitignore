@@ -416,3 +416,15 @@ FodyWeavers.xsd
 *.msix
 *.msm
 *.msp
+*.mcp.json
+
+# Python virtual environment
+venv/
+
+# Personal planning documents (not for version control)
+QUICK_START.md
+PROJECT_SUMMARY.md
+COMMITS.md
+
+# Commit documentation (stored in individual files)
+.commits/
